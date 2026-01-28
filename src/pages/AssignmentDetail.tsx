@@ -11,10 +11,10 @@ function AssignmentDetail() {
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [section, setSection] = useState('');
+  const [description, setDescription] = useState('');
   
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [contentFontSize, setContentFontSize] = useState(16); // px
   const contentEditorRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -26,6 +26,7 @@ function AssignmentDetail() {
       setContent(assignment.content || '');
       setTitle(assignment.title);
       setSection(assignment.section);
+      setDescription(assignment.description || '');
       setYoutubeUrl(assignment.youtubeUrl || '');
     } else {
       // Assignment not found, redirect to home
@@ -52,17 +53,45 @@ function AssignmentDetail() {
       content: nextContent,
       title,
       section,
+      description,
       youtubeUrl
     });
     setIsEditing(false);
   };
 
   const increaseFontSize = () => {
-    setContentFontSize((size) => Math.min(size + 2, 28)); // max 28px
+    const editor = contentEditorRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    
+    // Get current selection
+    const selection = window.getSelection();
+    if (!selection || selection.toString().length === 0) {
+      alert('Please select text first');
+      return;
+    }
+
+    // Use document.execCommand to apply font size to selected text
+    // Size values: 1-7, where we map them to px sizes
+    document.execCommand('fontSize', false, '5'); // 5 corresponds to larger font
   };
 
   const decreaseFontSize = () => {
-    setContentFontSize((size) => Math.max(size - 2, 12)); // min 12px
+    const editor = contentEditorRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    
+    // Get current selection
+    const selection = window.getSelection();
+    if (!selection || selection.toString().length === 0) {
+      alert('Please select text first');
+      return;
+    }
+
+    // Use document.execCommand to apply font size to selected text
+    document.execCommand('fontSize', false, '3'); // 3 corresponds to smaller font
   };
 
   const applyBoldToSelection = () => {
@@ -142,6 +171,16 @@ function AssignmentDetail() {
                   className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
+              <div>
+                <label className="block text-gray-300 mb-2 font-semibold">Description</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Brief description of the assignment"
+                  rows={2}
+                />
+              </div>
               
               <div>
                 <label className="block text-gray-300 mb-2 font-semibold">YouTube Video URL</label>
@@ -202,9 +241,6 @@ function AssignmentDetail() {
                   ref={contentEditorRef}
                   contentEditable
                   className="w-full min-h-[240px] px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 font-sans whitespace-pre-wrap break-words"
-                  style={{
-                    fontSize: `${contentFontSize}px`
-                  }}
                 />
               </div>
               <div className="flex gap-3">
@@ -232,7 +268,11 @@ function AssignmentDetail() {
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
                   {title}
                 </h1>
-            
+                {description && (
+                  <p className="text-gray-400 text-lg leading-relaxed">
+                    {description}
+                  </p>
+                )}
               </div>
 
               <div className="mb-6">

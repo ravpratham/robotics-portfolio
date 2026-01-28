@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen, Plus, Trash2 } from 'lucide-react';
 import { useAssignments } from '../hooks/useAssignments';
@@ -8,6 +8,7 @@ function Home() {
   const { assignments, deleteAssignment, addAssignment } = useAssignments();
   const [currentImage, setCurrentImage] = useState(0);
   const [showAddForm, setShowAddForm] = useState(false);
+  const assignmentsRef = useRef<HTMLDivElement | null>(null);
   const [newAssignment, setNewAssignment] = useState({
     title: '',
     section: '',
@@ -59,8 +60,59 @@ function Home() {
     }
   };
 
+  const scrollToAssignments = () => {
+    assignmentsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToAbout = () => {
+    const aboutSection = document.getElementById('about-section');
+    aboutSection?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToHome = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+      {/* Navbar */}
+      <nav className="bg-slate-950/80 backdrop-blur-md border-b border-blue-500/20 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-start">
+            {/* Left side - Name and Registration Number */}
+            <div>
+              <h1 className="text-2xl font-bold text-white">PRATHAM RAV</h1>
+              <p className="text-blue-400 text-sm font-medium">RA2311003011323</p>
+            </div>
+
+            {/* Right side - About Me and Assignments Link */}
+            <div className="flex flex-col items-end gap-4 max-w-md">
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={scrollToHome}
+                  className="px-4 py-2 text-white text-sm font-semibold rounded-lg border border-blue-400/50 hover:bg-blue-500/10 transition-all"
+                >
+                  Home
+                </button>
+                <button
+                  onClick={scrollToAbout}
+                  className="px-4 py-2 text-white text-sm font-semibold rounded-lg border border-blue-400/50 hover:bg-blue-500/10 transition-all"
+                >
+                  About Me
+                </button>
+                <button
+                  onClick={scrollToAssignments}
+                  className="px-4 py-2 text-white text-sm font-semibold rounded-lg border border-blue-400/50 hover:bg-blue-500/10 transition-all"
+                >
+                  Assignments
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       <div className="relative">
         <div className="absolute inset-0 bg-black/40 z-10" />
 
@@ -127,7 +179,50 @@ function Home() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-20">
+      {/* About Section */}
+      <div id="about-section" className="bg-slate-900/50 backdrop-blur-sm border-y border-blue-500/20 py-20">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Image - Replaced with Stylish Text */}
+            <div className="relative flex items-center justify-center min-h-80">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl blur-3xl" />
+              <div className="relative">
+                <h3 className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 text-center leading-tight">
+                  ACADEMIC<br />PORTFOLIO<br />ASSIGNMENTS
+                </h3>
+              </div>
+            </div>
+
+            {/* About Text */}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">About Me</h2>
+                <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 mb-8" />
+              </div>
+              
+              <div className="space-y-4 text-gray-300 leading-relaxed">
+                <p>
+                  I am a Computer Science and Engineering student with a strong interest in artificial intelligence, machine learning, and intelligent systems that solve real-world problems. I enjoy building practical, end-to-end applications that combine software development with data-driven and AI-based decision-making.
+                </p>
+                
+                <p>
+                  My academic and project experience spans areas such as AI-powered applications, data analysis, and web-based systems. I have worked on projects involving machine learning models, database-driven applications, and interactive web interfaces, with a focus on clarity, usability, and real-world relevance rather than purely theoretical solutions.
+                </p>
+                
+                <p>
+                  I am particularly interested in how AI and automation can improve efficiency in domains like education, agriculture, and sustainability. Through my projects, I aim to design systems that are reliable, scalable, and easy for users to interact with, while maintaining a strong technical foundation.
+                </p>
+                
+                <p>
+                  I am continuously learning new technologies and improving my problem-solving skills, with the goal of contributing to impactful software and AI-driven products in the future.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-20" ref={assignmentsRef}>
         <div className="text-center mb-16">
           <h2 className="text-5xl font-bold text-white mb-4">Assignments</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 mx-auto mb-6" />
@@ -213,40 +308,50 @@ function Home() {
             <div
               key={assignment.id}
               onClick={() => navigate(`/assignment/${assignment.id}`)}
-              className="group relative bg-gradient-to-br from-slate-900/90 to-blue-900/30 backdrop-blur-sm rounded-2xl p-8 border border-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 cursor-pointer"
+              className="group relative bg-gradient-to-br from-slate-900/90 to-blue-900/30 backdrop-blur-sm rounded-2xl overflow-hidden border border-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 cursor-pointer h-80"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/5 group-hover:to-cyan-500/5 rounded-2xl transition-all duration-300" />
+              {/* Background gradient on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/5 group-hover:to-cyan-500/5 transition-all duration-300" />
 
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-3 rounded-xl">
-                      <BookOpen className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-blue-400 text-sm font-medium tracking-wider uppercase">
-                        {assignment.section}
-                      </p>
-                      <h3 className="text-2xl font-bold text-white">
-                        {assignment.title}
-                      </h3>
-                    </div>
+              {/* Card Header with Title and Delete Button */}
+              <div className="relative h-48 bg-gradient-to-br from-blue-600/40 to-cyan-600/20 p-6 flex flex-col justify-between">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-blue-300 text-xs font-medium tracking-widest uppercase mb-2">
+                      {assignment.section}
+                    </p>
+                    <h3 className="text-3xl font-bold text-white leading-tight line-clamp-2">
+                      {assignment.title}
+                    </h3>
                   </div>
                   <button
                     onClick={(e) => handleDeleteAssignment(assignment.id, e)}
-                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                    className="ml-3 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-all flex-shrink-0"
                     aria-label="Delete assignment"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
-
-                <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/50">
-                  <p className="text-gray-400 text-center italic">
-                    {assignment.description}
-                  </p>
-                </div>
               </div>
+
+              {/* Card Content and Read More */}
+              <div className="relative px-6 py-4 bg-slate-900/50 h-32 flex flex-col justify-between">
+                <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+                  {assignment.description}
+                </p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/assignment/${assignment.id}`);
+                  }}
+                  className="self-start text-blue-400 text-xs font-semibold uppercase tracking-wide hover:text-cyan-400 transition-colors mt-2"
+                >
+                  Read More →
+                </button>
+              </div>
+
+              {/* View Details hint */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
             </div>
           ))}
         </div>

@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Assignment } from '../types';
-import { Database } from '../types/supabase';
-
-type DatabaseAssignment = Database['public']['Tables']['assignments']['Row'];
-type DatabaseInsert = Database['public']['Tables']['assignments']['Insert'];
-type DatabaseUpdate = Database['public']['Tables']['assignments']['Update'];
 
 const STORAGE_KEY = 'robotics-assignments';
 
@@ -29,7 +24,17 @@ const defaultAssignments: Assignment[] = [
 ];
 
 // Convert Supabase format to our Assignment format
-function convertToAssignment(dbAssignment: DatabaseAssignment): Assignment {
+interface DbAssignment {
+  id: number;
+  created_at: string;
+  title: string;
+  description: string | null;
+  section: string;
+  content: string | null;
+  youtube_url: string | null;
+}
+
+function convertToAssignment(dbAssignment: DbAssignment): Assignment {
   return {
     id: dbAssignment.id,
     title: dbAssignment.title,
@@ -38,30 +43,6 @@ function convertToAssignment(dbAssignment: DatabaseAssignment): Assignment {
     content: dbAssignment.content || '',
     youtubeUrl: dbAssignment.youtube_url || ''
   };
-}
-
-// Convert our Assignment format to Supabase format for insert
-function convertToDbInsert(assignment: Assignment): DatabaseInsert {
-  return {
-    title: assignment.title,
-    description: assignment.description || null,
-    section: assignment.section,
-    content: assignment.content || null,
-    youtube_url: assignment.youtubeUrl || null
-  };
-}
-
-// Convert our Assignment format to Supabase format for update
-function convertToDbUpdate(updates: Partial<Assignment>): DatabaseUpdate {
-  const updateObj: DatabaseUpdate = {};
-  
-  if (updates.title !== undefined) updateObj.title = updates.title;
-  if (updates.description !== undefined) updateObj.description = updates.description || null;
-  if (updates.section !== undefined) updateObj.section = updates.section;
-  if (updates.content !== undefined) updateObj.content = updates.content || null;
-  if (updates.youtubeUrl !== undefined) updateObj.youtube_url = updates.youtubeUrl || null;
-  
-  return updateObj;
 }
 
 export function useAssignments() {
@@ -79,7 +60,6 @@ export function useAssignments() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch from Supabase on mount
   useEffect(() => {
@@ -97,7 +77,7 @@ export function useAssignments() {
         }
 
         if (data && data.length > 0) {
-          const convertedAssignments = data.map(convertToAssignment);
+          const convertedAssignments = (data as DbAssignment[]).map(convertToAssignment);
           setAssignments(convertedAssignments);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(convertedAssignments));
         }
@@ -130,12 +110,18 @@ export function useAssignments() {
 
     // Try to sync to Supabase
     try {
-      const { error } = await supabase
-        .from('assignments')
-        .insert(convertToDbInsert(newAssignment) as DatabaseInsert);
+      const { error } = await supabase.from('assignments').insert({
+        title: newAssignment.title,
+        description: newAssignment.description || null,
+        section: newAssignment.section,
+        content: newAssignment.content || null,
+        youtube_url: newAssignment.youtubeUrl || null
+      });
 
       if (error) {
-        console.log('Failed to sync to Supabase, changes saved locally only');
+        console.log('Failed to sync to Supabase:', error.message);
+      } else {
+        console.log('Successfully synced to Supabase');
       }
     } catch (err) {
       console.log('Supabase not available, changes saved locally only');
@@ -156,7 +142,7 @@ export function useAssignments() {
         .eq('id', id);
 
       if (error) {
-        console.log('Failed to delete from Supabase, deletion saved locally only');
+        console.log('Failed to delete from Supabase:', error.message);
       }
     } catch (err) {
       console.log('Supabase not available, deletion saved locally only');
@@ -169,13 +155,21 @@ export function useAssignments() {
 
     // Try to sync to Supabase
     try {
+      const updateObj: Record<string, unknown> = {};
+      
+      if (updates.title !== undefined) updateObj.title = updates.title;
+      if (updates.description !== undefined) updateObj.description = updates.description || null;
+      if (updates.section !== undefined) updateObj.section = updates.section;
+      if (updates.content !== undefined) updateObj.content = updates.content || null;
+      if (updates.youtubeUrl !== undefined) updateObj.youtube_url = updates.youtubeUrl || null;
+
       const { error } = await supabase
         .from('assignments')
-        .update(convertToDbUpdate(updates) as DatabaseUpdate)
+        .update(updateObj)
         .eq('id', id);
 
       if (error) {
-        console.log('Failed to update Supabase, changes saved locally only');
+        console.log('Failed to update Supabase:', error.message);
       }
     } catch (err) {
       console.log('Supabase not available, changes saved locally only');
@@ -192,8 +186,7 @@ export function useAssignments() {
     deleteAssignment,
     updateAssignment,
     getAssignment,
-    isLoading,
-    error
+    isLoading
   };
 }
 
